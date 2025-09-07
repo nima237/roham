@@ -1,0 +1,136 @@
+services:
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    image: rh_tse-backend:latest
+    volumes:
+      - ./backend/media:/app/media
+      - ./backend/staticfiles:/app/staticfiles
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - SQLSERVER_HOST=db
+      - SQLSERVER_DB=RH_TSE_DB
+      - SQLSERVER_USER=sa
+      - SQLSERVER_PASSWORD=tse_pass_123
+      - IN_DOCKER=1
+      - CORS_ALLOW_ALL_ORIGINS=False
+      - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+      - CSRF_COOKIE_SECURE=False
+      - SESSION_COOKIE_SECURE=False
+      - CSRF_TRUSTED_ORIGINS=https://localhost,http://localhost,https://127.0.0.1,http://127.0.0.1
+    depends_on:
+      db:
+        condition: service_started
+      redis:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./backend/staticfiles:/app/staticfiles:ro
+      - ./backend/media:/app/media:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: rh_tse-frontend:latest
+    volumes:
+      - ./frontend/public:/app/public
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - backend
+
+  db:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+      - ./certs:/var/opt/mssql/certs
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=tse_pass_123
+      - MSSQL_PID=Express
+      - MSSQL_TCP_PORT=1433
+      - MSSQL_CERTIFICATE_FILE=/var/opt/mssql/certs/server.crt
+      - MSSQL_PRIVATE_KEY_FILE=/var/opt/mssql/certs/server.key
+      - MSSQL_TRUST_CERTIFICATE=/var/opt/mssql/certs/ca.crt
+    ports:
+      - "1433:1433"
+    # command: >
+    #   bash -c "
+    #   /opt/mssql/bin/sqlservr &
+    #   sleep 30s
+    #   /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P tse_pass_123 -Q 'ALTER LOGIN sa ENABLE;'
+    #   /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P tse_pass_123 -Q 'ALTER LOGIN sa WITH PASSWORD = \"tse_pass_123\";'
+    #   /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P tse_pass_123 -Q 'EXEC sys.sp_configure N\"remote access\", N\"1\";'
+    #   /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P tse_pass_123 -Q 'RECONFIGURE;'
+    #   wait
+    #   "
+    # healthcheck removed to avoid issues
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ldap:
+    image: osixia/openldap:1.5.0
+    container_name: rh_tse-ldap
+    ports:
+      - "389:389"
+      - "636:636"
+    environment:
+      - LDAP_ORGANISATION="RH TSE"
+      - LDAP_DOMAIN="rh-tse.local"
+      - LDAP_ADMIN_PASSWORD=admin123
+      - LDAP_CONFIG_PASSWORD=config123
+      - LDAP_READONLY_USER=false
+      - LDAP_RFC2307BIS_SCHEMA=false
+      - LDAP_BACKEND=mdb
+      - LDAP_TLS=false
+      - KEEPALIVED=0
+    volumes:
+      - ldap_data:/var/lib/ldap
+      - ldap_config:/etc/ldap/slapd.d
+      - ./ldap/ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom
+    command: --copy-service --loglevel debug
+
+  phpldapadmin:
+    image: osixia/phpldapadmin:0.9.0
+    container_name: rh_tse-phpldapadmin
+    ports:
+      - "8080:80"
+    environment:
+      - PHPLDAPADMIN_LDAP_HOSTS=ldap
+      - PHPLDAPADMIN_HTTPS=false
+      - PHPLDAPADMIN_LDAP_CLIENT_TLS=false
+      - PHPLDAPADMIN_LDAP_PORT=389
+      - PHPLDAPADMIN_LDAP_CLIENT_TLS_REQCERT=never
+    depends_on:
+      - ldap
+
+volumes:
+  sqlserver_data:
+  minio_data:
+  ldap_data:
+  ldap_config: 

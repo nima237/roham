@@ -1,0 +1,13 @@
+# Create admin user
+dn: cn=admin,ou=people,dc=rh-tse,dc=local
+objectClass: inetOrgPerson
+objectClass: person
+cn: admin
+sn: Administrator
+givenName: Admin
+uid: admin
+userPassword: admin123
+mail: admin@rh-tse.local
+displayName: Administrator
+department: IT
+title: System Administrator

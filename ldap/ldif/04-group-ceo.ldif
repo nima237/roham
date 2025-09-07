@@ -1,0 +1,5 @@
+# Create CEO group
+dn: cn=ceo,ou=groups,dc=rh-tse,dc=local
+objectClass: groupOfNames
+cn: ceo
+description: CEO group

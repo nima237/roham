@@ -1,0 +1,5 @@
+# Create executor group
+dn: cn=executor,ou=groups,dc=rh-tse,dc=local
+objectClass: groupOfNames
+cn: executor
+description: Executor group

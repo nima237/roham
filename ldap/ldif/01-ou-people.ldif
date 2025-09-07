@@ -1,0 +1,5 @@
+# Create organizational unit for people
+dn: ou=people,dc=rh-tse,dc=local
+objectClass: organizationalUnit
+ou: people
+description: People in RH TSE organization

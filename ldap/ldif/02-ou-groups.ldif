@@ -1,0 +1,5 @@
+# Create organizational unit for groups
+dn: ou=groups,dc=rh-tse,dc=local
+objectClass: organizationalUnit
+ou: groups
+description: Groups in RH TSE organization

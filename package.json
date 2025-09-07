@@ -1,0 +1,8 @@
+{
+  "devDependencies": {
+    "@types/react-dom": "^19.1.6"
+  },
+  "dependencies": {
+    "moment-jalaali": "^0.10.4"
+  }
+}

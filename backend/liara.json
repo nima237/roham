@@ -1,0 +1,8 @@
+{
+  "app": "rohamb",
+  "port": 80,
+  "build": {
+    "location": "iran"
+  },
+  "disks": []
+}

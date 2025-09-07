@@ -1,0 +1,26 @@
+FROM python:3.10
+
+WORKDIR /app
+
+# Install system dependencies using Iran mirror
+RUN sed -i 's/deb.debian.org/mirror.sharif.edu\/debian/g' /etc/apt/sources.list && \
+    apt-get update && apt-get install -y \
+    build-essential \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -i https://pypi.org/simple -r requirements.txt
+
+COPY . .
+
+ENV DJANGO_SETTINGS_MODULE=config.settings
+
+# Create entrypoint script
+RUN echo '#!/bin/bash\n\
+python manage.py collectstatic --noinput\n\
+python manage.py migrate\n\
+exec gunicorn config.wsgi:application --bind 0.0.0.0:8000\n\
+' > /app/entrypoint.sh && chmod +x /app/entrypoint.sh
+
+CMD ["/app/entrypoint.sh"] 

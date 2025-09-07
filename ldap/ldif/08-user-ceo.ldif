@@ -1,0 +1,13 @@
+# Create CEO user
+dn: cn=ceo1,ou=people,dc=rh-tse,dc=local
+objectClass: inetOrgPerson
+objectClass: person
+cn: ceo1
+sn: CEO
+givenName: CEO
+uid: ceo1
+userPassword: ceo123
+mail: ceo1@rh-tse.local
+displayName: CEO User
+department: Management
+title: Chief Executive Officer

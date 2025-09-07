@@ -1,0 +1,13 @@
+# Create executor user
+dn: cn=executor1,ou=people,dc=rh-tse,dc=local
+objectClass: inetOrgPerson
+objectClass: person
+cn: executor1
+sn: Executor
+givenName: Executor
+uid: executor1
+userPassword: executor123
+mail: executor1@rh-tse.local
+displayName: Executor User
+department: Operations
+title: Executor
